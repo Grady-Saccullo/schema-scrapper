@@ -1,3 +1,96 @@
 {
-	"title": "body.header.h1"
+	"$version": "0.1",
+	"title": {
+		"$type": "string",
+		"$node": "body.header.div[id=settings].div.h2"
+	},
+	"bill_number": {
+		"$type": "string",
+		"$node": "body.div[id=main-block].main.div[id=billText].div[id=substrdiv].h2"
+	},
+	"statuses": {
+		"$type": "list",
+		"$node": "body.div[id=main-block].main.div[id=billStatus].div.table.tbody",
+		"$itr_node": "tr",
+		"$start_index": 1,
+		"$item": {
+			"date": {
+				"$type": "string",
+				"$node": "*.td.font",
+				"$index": 0
+			},
+			"action": {
+				"$type": "string",
+				"$node": "*.td.font",
+				"$index": 1
+			},
+			"location": {
+				"$type": "string",
+				"$node": "*.td.font",
+				"$index": 2
+			},
+			"votes": {
+				"count": {
+					"$type": "string",
+					"$node": "*.td.font?.a",
+					"$index": 3
+				},
+				"link": {
+					"$type": "string",
+					"$node": "*.td.font?.a:href",
+					"$index": 3
+				}
+			}
+		}
+	},
+	"sections": {
+		"$type": "list",
+		"$itr_node": "body.div.main.section",
+		"$itr_node_match": "h2",
+		"$its_ident": "SECTION",
+		"$item": {
+			"title": {
+				"$type": "string",
+				"$node": "SECTION.h2"
+			},
+			"content": {
+				"$type": "string",
+				"$node": "body.div.main.p",
+				"$index": 1,
+				"$attrs": {
+					"class": "section-content"
+				}
+			},
+			"sub_sections": {
+				"$type": "list",
+				"$itr_node": "*.div",
+				"$itr_node_match": "*",
+				"$item": {
+					"title": {
+						"$type": "string",
+						"$node": "*.h3",
+						"$attrs": {
+							"class": "sub-section-title"
+						}
+					},
+					"content": {
+						"$type": "string",
+						"$node": "",
+						"$index": 1,
+						"$attrs": {
+							"class": "sub-section-content"
+						}
+					}
+				}
+			}
+		}
+	},
+	"links": {
+		"$type": "list",
+		"$node": "body.div.main.section",
+		"$item": {
+			"$type": "string",
+			"$node": "*.h2"
+		}
+	}
 }
