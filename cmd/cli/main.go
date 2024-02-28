@@ -1,14 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/Grady-Saccullo/schema-scrapper/pkg/ast"
+	"github.com/chromedp/chromedp"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -24,15 +25,24 @@ func main() {
 
 	url := args[0]
 
-	resp, err := http.Get(url)
+	ctx, cancel := chromedp.NewContext(context.Background())
+	defer cancel()
+
+	var htmlContent string
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(url),
+		chromedp.OuterHTML("html", &htmlContent),
+	)
+
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
 	}
 
-	defer resp.Body.Close()
+	contentIoReader := strings.NewReader(htmlContent)
 
-	nodes, err := ast.New(resp.Body)
+	nodes, err := ast.New(contentIoReader)
+
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -99,19 +109,19 @@ func getNode(tree ast.Node, path string) interface{} {
 }
 
 func findNode(node ast.Node, path []string) ast.Node {
+
 	if len(path) == 0 {
 		return node
 	}
 
-	tag, attrs := getPathValueWithAttrs(path[0])
-
 	switch n := node.(type) {
 	case *ast.Element:
+		tag, jsonAttr := getPathValueWithAttrs(path[0])
 		for _, child := range n.Children() {
 			switch c := child.(type) {
 			case *ast.Element:
 				isTag := c.Tag() == ast.ElementTag(tag)
-				hasAttrs := checkAttrs(*c.Attributes(), attrs)
+				hasAttrs := checkAttrs(c.Attributes(), jsonAttr)
 
 				if isTag && hasAttrs {
 					return findNode(child, path[1:])
@@ -123,13 +133,17 @@ func findNode(node ast.Node, path []string) ast.Node {
 	return nil
 }
 
-func checkAttrs(attrs map[string]string, nodeAttrs *map[string]string) bool {
-	if nodeAttrs == nil {
+func checkAttrs(astAttrs *map[string]string, jsonAttrs *map[string]string) bool {
+	if jsonAttrs == nil {
 		return true
 	}
 
-	for k, v := range *nodeAttrs {
-		if attrs[k] != v {
+	if astAttrs == nil {
+		return false
+	}
+
+	for k, v := range *jsonAttrs {
+		if (*astAttrs)[k] != v {
 			return false
 		}
 	}
@@ -162,31 +176,34 @@ func parseJsonSchema(node ast.Node, jsonSchema map[string]interface{}, out map[s
 		case map[string]interface{}:
 			switch v.(map[string]interface{})["$type"] {
 			case "string":
-				var el JsonSchemaString
+				var el JsonSchemaNodeString
 				err := mapstructure.Decode(v, &el)
 				if err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
 
-				println()
 				out[k] = getNode(node, el.Node)
-				println()
 			case "list":
-				fmt.Println("TODO: parse html into list")
-				continue
-				// var el JsonSchemaNodeList
-				// err := mapstructure.Decode(v, &el)
-				// if err != nil {
-				// 	fmt.Println("Error: ", err)
-				// 	return
-				// }
-				//
-				// if el.Item != nil {
-				// 	fmt.Println("parsing items")
-				// 	out[k] = map[string]interface{}{}
-				// 	parseJsonSchema(*el.Item, out[k].(map[string]interface{}))
-				// }
+				var el JsonSchemaNodeList
+				err := mapstructure.Decode(v, &el)
+
+				if err != nil {
+					fmt.Println("Error: ", err)
+					return
+				}
+
+				if err = validateListJson(el); err != nil {
+					fmt.Println("Error: ", err)
+					return
+				}
+
+				nestedNode := getNode(node, *el.ItrNode)
+
+				if el.Item != nil {
+					out[k] = map[string]interface{}{}
+					parseJsonSchema(node, *el.Item, out[k].(map[string]interface{}))
+				}
 			case nil:
 				out[k] = map[string]interface{}{}
 				parseJsonSchema(node, v.(map[string]interface{}), out[k].(map[string]interface{}))
@@ -199,23 +216,59 @@ func parseJsonSchema(node ast.Node, jsonSchema map[string]interface{}, out map[s
 	}
 }
 
+func validateListJson(el JsonSchemaNodeList) error {
+	if el.ItrNode == nil {
+		return fmt.Errorf("Error: $itr_node is required for list")
+	}
+
+	if el.Item == nil {
+		return fmt.Errorf("Error: $item is required for list")
+
+	}
+
+	if el.ItrIdent == nil {
+		return fmt.Errorf("Error: $itr_ident is required for list")
+	}
+
+	return nil
+}
+
 type SchemaNodeType string
 
 const (
 	SchemaNodeType_String SchemaNodeType = "string"
+	SchemaNodeType_Number SchemaNodeType = "number"
 	SchemaNodeType_List   SchemaNodeType = "list"
+	SchemaNodeType_Map    SchemaNodeType = "map"
 )
 
-type JsonSchemaString struct {
+type JsonSchemaNodeString struct {
+	Type  SchemaNodeType `json:"$type" mapstructure:"$type"`
+	Node  string         `json:"$node" mapstructure:"$node"`
+	Index *int           `json:"$index" mapstructure:"$index"`
+}
+
+type JsonSchemaNodeNumber struct {
 	Type  SchemaNodeType `json:"$type" mapstructure:"$type"`
 	Node  string         `json:"$node" mapstructure:"$node"`
 	Index *int           `json:"$index" mapstructure:"$index"`
 }
 
 type JsonSchemaNodeList struct {
-	Type      SchemaNodeType          `json:"$type" mapstructure:"$type"`
-	Node      string                  `json:"$node" mapstructure:"$node"`
-	ItrNode   string                  `json:"$itr_node" mapstructure:"$itr_node"`
-	NodeMatch *string                 `json:"$itr_node_match" mapstructure:"$itr_node_match"`
-	Item      *map[string]interface{} `json:"$item" mapstructure:"$item"`
+	Item         *map[string]interface{} `json:"$item" mapstructure:"$item"`
+	ItrIdent     *string                 `json:"$itr_ident" mapstructure:"$itr_ident"`
+	ItrNode      *string                 `json:"$itr_node" mapstructure:"$itr_node"`
+	ItrNodeMatch *string                 `json:"$itr_node_match" mapstructure:"$itr_node_match"`
+	StartOffset  *int                    `json:"$start_offset" mapstructure:"$start_offset"`
+	Type         SchemaNodeType          `json:"$type" mapstructure:"$type"`
+}
+
+type JsonSchemaNodeMap struct {
+	Type SchemaNodeType `json:"$type" mapstructure:"$type"`
+	// KeyNode must be of type string or number
+	KeyNode      interface{} `json:"$key_node" mapstructure:"$key_node"`
+	ValueNode    interface{} `json:"$value_node" mapstructure:"$value_node"`
+	ItrNode      *string     `json:"$itr_node" mapstructure:"$itr_node"`
+	ItrIdent     *string     `json:"$itr_ident" mapstructure:"$itr_ident"`
+	ItrNodeMatch *string     `json:"$itr_node_match" mapstructure:"$itr_node_match"`
 }

@@ -1,96 +1,66 @@
 {
 	"$version": "0.1",
+	"$paths": {
+		"bill-text": "body.div[id=main-block].main.div[id=billText]"
+	},
 	"title": {
 		"$type": "string",
-		"$node": "body.header.div[id=settings].div.h2"
+		"$selector": "body.div[id=main-block].main.h3"
 	},
 	"bill_number": {
-		"$type": "string",
-		"$node": "body.div[id=main-block].main.div[id=billText].div[id=substrdiv].h2"
-	},
-	"statuses": {
-		"$type": "list",
-		"$node": "body.div[id=main-block].main.div[id=billStatus].div.table.tbody",
-		"$itr_node": "tr",
-		"$start_index": 1,
-		"$item": {
-			"date": {
-				"$type": "string",
-				"$node": "*.td.font",
-				"$index": 0
-			},
-			"action": {
-				"$type": "string",
-				"$node": "*.td.font",
-				"$index": 1
-			},
-			"location": {
-				"$type": "string",
-				"$node": "*.td.font",
-				"$index": 2
-			},
-			"votes": {
-				"count": {
-					"$type": "string",
-					"$node": "*.td.font?.a",
-					"$index": 3
-				},
-				"link": {
-					"$type": "string",
-					"$node": "*.td.font?.a:href",
-					"$index": 3
-				}
-			}
-		}
+		"$type": "number",
+		"$selector": "body.div[id=main-block].main.div[id=billText].div[id=substrdiv].h2"
 	},
 	"sections": {
-		"$type": "list",
-		"$itr_node": "body.div.main.section",
-		"$itr_node_match": "h2",
-		"$its_ident": "SECTION",
+		"$type": "array",
+		"$itr_el": "body.div.main.section.table.tbody",
+		"$itr_el_match": "tr",
+		"$itr_ident": "table-row",
+		"$start_offset": 1,
 		"$item": {
 			"title": {
 				"$type": "string",
-				"$node": "SECTION.h2"
+				"$selector": "@table-row.td.div.h3"
 			},
 			"content": {
 				"$type": "string",
-				"$node": "body.div.main.p",
-				"$index": 1,
-				"$attrs": {
-					"class": "section-content"
-				}
+				"$selector": "@table-row.td.div.p[nth=1]"
 			},
-			"sub_sections": {
-				"$type": "list",
-				"$itr_node": "*.div",
-				"$itr_node_match": "*",
+			"bill_numbers": {
+				"$type": "array",
+				"$itr_el": "@table-row.td.div.div",
+				"$itr_el_match": "*",
+				"$itr_ident": "sub-section",
 				"$item": {
-					"title": {
-						"$type": "string",
-						"$node": "*.h3",
-						"$attrs": {
-							"class": "sub-section-title"
-						}
-					},
-					"content": {
-						"$type": "string",
-						"$node": "",
-						"$index": 1,
-						"$attrs": {
-							"class": "sub-section-content"
-						}
-					}
+					"$type": "number",
+					"$selector": "@sub-section.p[id=bill-number]"
 				}
 			}
 		}
 	},
-	"links": {
-		"$type": "list",
-		"$node": "body.div.main.section",
-		"$item": {
+	"link": {
+		"$type": "object",
+		"$key_node": {
 			"$type": "string",
-			"$node": "*.h2"
+			"$selector": "body.div[id=main-block].main.section[id=contact-info].div[id=name]"
+		},
+		"$value_node": {
+			"$type": "string",
+			"$selector": "a:href"
+		}
+	},
+	"links": {
+		"$type": "object",
+		"$itr_node": "body.div.main.section",
+		"$itr_node_match": "div",
+		"$itr_ident": "contact-info",
+		"$key_node": {
+			"$type": "string",
+			"$selector": "@contact-info.div[id=name]"
+		},
+		"$value_node": {
+			"$type": "string",
+			"$selector": "@contact-info.a:href"
 		}
 	}
 }

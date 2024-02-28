@@ -21,67 +21,67 @@ type NodeText interface {
 }
 
 type Element struct {
-	nodeType NodeType
-	tag      ElementTag
-	attrs    *map[string]string
-	children []Node
-	parent   *Node `json:"-"` // for testing purposes (serialization)
+	NodeType     NodeType           `json:"type"`
+	Name         ElementTag         `json:"tag"`
+	Attrs        *map[string]string `json:"attrs"`
+	NodeChildren []Node             `json:"children"`
+	NodeParent   *Node              `json:"-"` // for testing purposes (serialization)
 }
 
 func (e *Element) Type() NodeType {
-	return e.nodeType
+	return e.NodeType
 }
 
 func (e *Element) Tag() ElementTag {
-	return e.tag
+	return e.Name
 }
 
 func (e *Element) AddChild(n Node) {
-	e.children = append(e.children, n)
+	e.NodeChildren = append(e.NodeChildren, n)
 }
 
 func (e *Element) Children() []Node {
-	return e.children
+	return e.NodeChildren
 }
 
 func (e *Element) SetParent(n *Node) {
-	e.parent = n
+	e.NodeParent = n
 }
 
 func (e *Element) Parent() *Node {
-	return e.parent
+	return e.NodeParent
 }
 
 func (e *Element) SetAttribute(key, value string) {
-	if e.attrs == nil {
-		e.attrs = &map[string]string{}
+	if e.Attrs == nil {
+		e.Attrs = &map[string]string{}
 	}
 
-	(*e.attrs)[key] = value
+	(*e.Attrs)[key] = value
 }
 
 func (e *Element) Attributes() *map[string]string {
-	return e.attrs
+	return e.Attrs
 }
 
 type Text struct {
-	nodeType NodeType
-	parent   *Node `json:"-"` // for testing purposes (serialization)
-	value    string
+	NodeType   NodeType `json:"type"`
+	NodeParent *Node    `json:"-"` // for testing purposes (serialization)
+	NodeValue  string   `json:"value"`
 }
 
 func (t *Text) SetParent(n *Node) {
-	t.parent = n
+	t.NodeParent = n
 }
 
 func (t *Text) Parent() *Node {
-	return t.parent
+	return t.NodeParent
 }
 
 func (t *Text) Type() NodeType {
-	return t.nodeType
+	return t.NodeType
 }
 
 func (t *Text) Value() string {
-	return t.value
+	return t.NodeValue
 }
