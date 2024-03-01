@@ -296,7 +296,7 @@ This will output the value of the selected node as a number
         "$value_node": {
             "name": {
                 "$type": "string",
-                "$selector": "@table-row.td[nth=1]"
+                "$selector": "@table-row.td[nth=0]"
             },
             "age": {
                 "$type": "string",
@@ -304,7 +304,7 @@ This will output the value of the selected node as a number
             }
             "link": {
                 "$type": "string",
-                "$selector": "@table-row.td[nth=1]"
+                "$selector": "@table-row.td[nth=2]"
             }
         }
     }
