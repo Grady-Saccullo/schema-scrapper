@@ -369,7 +369,7 @@ This will output the value of the selected node as a number
 **Input Schema**
 ```json
 {
-    "singular: {
+    "singular": {
         "$type": "object",
         "$key_node": {
             "$type": "string",
