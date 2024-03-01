@@ -1,7 +1,0 @@
-{
-	"$version": "0.1",
-	"title": {
-		"$type": "string",
-		"$node": "body.div[id=main-block].main.div[id=billText].div[id=billbox].font.center.b"
-	}
-}

@@ -71,7 +71,7 @@ This is a list of key value pairs separated by commas. The key is the attribute 
 There are some reserved attributes which have special meaning. All reserved attributes start with `!` to help
 differentiate them from custom attributes and prevent any conflicts.
 
-- `!nth` - The index of the tag to select. This is 0 based or first/last. Possible values are `first`, `last`, or a number.
+- `!nth` - The index of the tag to select. This is 0 based or first/last. Currently only accepts a number.
 
 ```json 
 {
@@ -98,7 +98,7 @@ differentiate them from custom attributes and prevent any conflicts.
 }
 ```
 
-#### Get Data from Attributes `:<attribute-name>`
+#### Get Data from Attributes `:<attribute-name>` (WIP/Not Implemented)
 
 This is a way to get the value of an attribute from the selected tag to use as the value of the node.
 
@@ -127,18 +127,18 @@ selectors are supported which is why we are abusing the syntax.
 | `array`   | ✅        |
 | `null`    | ❌ (soon) |
 
-### String
+### `string`
 
-| Field     | Required | Description |
-|-----------|----------|-------------|
-| $type     | ✅       | `string`    |
-| $selector | ✅       | The node to select from the html. |
+| Field       | Required | Description |
+|-------------|----------|-------------|
+| `$type`     | ✅       | `string`    |
+| `$selector` | ✅       | The node to select from the html. |
 
 **Input HTML**
 ```html
 <html>
     <div>
-        <p>Turing</hjson>
+        <p>Turing</p>
         <p class="subtext">Alan Turing</h2>
         <div class="age">
             <p>age</p>
@@ -198,13 +198,21 @@ selectors are supported which is why we are abusing the syntax.
 }
 ```
 
-### Number
+### `number`
+
+This will output the value of the selected node as a number
+
+
+| Field       | Required | Description |
+|-------------|----------|-------------|
+| `$type`     | ✅       | `number`    |
+| `$selector` | ✅       | The node to select from the html. |
 
 **Input HTML**
 ```html
 <html>
     <div>
-        <p>Turing</hjson>
+        <p>Turing</p>
         <p class="subtext">Alan Turing</h2>
         <div class="age">
             <p>age</p>
@@ -232,13 +240,183 @@ selectors are supported which is why we are abusing the syntax.
 **Output JSON**
 ```json
 {
-    "name": "Turing",
-    "subtext": "Alan Turing",
-    "link": "https://en.wikipedia.org/wiki/Alan_Turing",
-    "data": {
+    "age": 41
+}
+```
+
+
+### `array`
+
+| Field           | Required | Description |
+|-----------------|----------|-------------|
+| `$type`         | ✅       | `array` |
+| `$value_node`   | ✅       | The node to select for the object value. Can be any type of node. |
+| `$itr_el`       | ✅       | The node to iterate over to build the array. |
+| `$itr_ident`    | ✅       | The internal identifier to reference in the schema. |
+| `$itr_el_match` | ❌       | The tag to match against when iterating. This has the same power as the `$selector` field. If not supplied assumes `*` |
+| `$start_offset` | ❌       | The index to start the iteration at. This is 0 based. If not supplied assumes `0` |
+
+**Input HTML**
+```html
+<html>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>name</th>
+                    <th>age</th>
+                    <th>link</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Turing</td>
+                    <td>41</td>
+                    <td><a href="https://en.wikipedia.org/wiki/Alan_Turing">Wikipedia</a></td>
+                </tr>
+                <tr>
+                    <td>Babbage</td>
+                    <td>79</td>
+                    <td><a href="https://en.wikipedia.org/wiki/Charles_Babbage">Wikipedia</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</html>
+```
+
+**Input Schema**
+```json
+{
+    "values": {
+        "$type": "array",
+        "$itr_el": "div.table.tbody",
+        "$itr_ident": "table-row",
+        "$itr_el_match": "tr",
+        "$value_node": {
+            "name": {
+                "$type": "string",
+                "$selector": "@table-row.td[nth=1]"
+            },
+            "age": {
+                "$type": "string",
+                "$selector": "@table-row.td[nth=1]"
+            }
+            "link": {
+                "$type": "string",
+                "$selector": "@table-row.td[nth=1]"
+            }
+        }
+    }
+}
+```
+
+**Output JSON**
+```json
+{
+    "values": [
+        {
+            "name": "Turing",
+            "age": "41",
+            "link": "https://en.wikipedia.org/wiki/Alan_Turing"
+        },
+        {
+            "name": "Babbage",
+            "age": "79",
+            "link": "https://en.wikipedia.org/wiki/Charles_Babbage"
+        }
+    ]
+}
+```
+
+
+### `object`
+
+| Field           | Required | Description |
+|-----------------|----------|-------------|
+| `$type`         | ✅       | `object`    |
+| `$key_node`     | ✅       | The node to select for the object key. Can only be of type `string` or `number` node |
+| `$value_node`   | ✅       | The node to select for the object value. Can be any type of node. |
+| `$itr_el`       | ❌       | The node to iterate over to build the object. If not provided the object will only have one key value pair. |
+| `$itr_ident`    | ❌       | The internal identifier to reference in the schema. This is required when `$itr_el` is supplied |
+| `$itr_el_match` | ❌       | The tag to match against when iterating. This has the same power as the `$selector` field. This is required when `$itr_el` is supplied |
+
+**Input HTML**
+```html
+<html>
+    <div>
+        <table>
+            <tbody>
+                <tr>
+                    <td>name</td>
+                    <td>Turing</td>
+                </tr>
+                <tr>
+                    <td>age</td>
+                    <td>41</td>
+                </tr>
+                <hr>
+                <tr>
+                    <td>link</td>
+                    <td>https://en.wikipedia.org/wiki/Alan_Turing">Wikipedia</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</html>
+```
+
+**Input Schema**
+```json
+{
+    "singular: {
+        "$type": "object",
+        "$key_node": {
+            "$type": "string",
+            "$selector": "html.div.table.tbody.tr[!nth=0].td[!nth=0]"
+        },
+        "$value_node": {
+            "$type": "string",
+            "$selector": "html.div.table.tbody.tr[!nth=0].td[!nth=1]"
+        }
+    },
+    "iteration": {
+        "$type": "object",
+        "$itr_el": "div.table.tbody",
+        "$itr_ident": "table-row",
+        "$itr_el_match": "tr",
+        "$key_node": {
+            "$type": "string",
+            "$selector": "@table-row.td[nth=0]"
+        },
+        "$value_node": {
+            "$type": "string",
+            "$selector": "@table-row.td[nth=1]"
+        }
+    }
+}
+```
+
+**Output JSON**
+```json
+{
+    "singular": {
         "name": "Turing",
-        "subtext": "Alan Turing",
+    },
+    "iteration": {
+        "name": "Turing",
+        "age": "41",
         "link": "https://en.wikipedia.org/wiki/Alan_Turing"
     }
 }
 ```
+
+## Work in Progress
+
+### Node
+- [ ] Add support for `boolean` type
+- [ ] Add support for `null` type
+- [ ] Add support for !nth to have a value of `first`/`last`
+- [ ] Add support for selecting out data via `:<attribute-name>`
+- [ ] Add support for `?` (optional) access
+- [ ] Add support for array with index access (useful for tables with headers)

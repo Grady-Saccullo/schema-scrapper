@@ -1,11 +1,12 @@
 {
 	"$version": "0.1",
-	"$paths": {
-		"bill-text": "body.div[id=main-block].main.div[id=billText]"
-	},
 	"title": {
 		"$type": "string",
-		"$selector": "body.div[id=main-block].main.h3"
+		"$selector": "body.div[id=main-block].main.div[id=billStatus].span"
+	},
+	"test": {
+		"$type": "string",
+		"$selector": "body.div[id=main-block].main.div[!nth=2].span"
 	},
 	"bill_number": {
 		"$type": "number",
@@ -13,28 +14,18 @@
 	},
 	"sections": {
 		"$type": "array",
-		"$itr_el": "body.div.main.section.table.tbody",
+		"$itr_el": "body.div[id=main-block].main.div[id=billStatus].div.table.tbody",
 		"$itr_el_match": "tr",
 		"$itr_ident": "table-row",
 		"$start_offset": 1,
-		"$item": {
-			"title": {
+		"$value_node": {
+			"date": {
 				"$type": "string",
-				"$selector": "@table-row.td.div.h3"
+				"$selector": "@table-row.td[!nth=0].font"
 			},
-			"content": {
+			"action": {
 				"$type": "string",
-				"$selector": "@table-row.td.div.p[nth=1]"
-			},
-			"bill_numbers": {
-				"$type": "array",
-				"$itr_el": "@table-row.td.div.div",
-				"$itr_el_match": "*",
-				"$itr_ident": "sub-section",
-				"$item": {
-					"$type": "number",
-					"$selector": "@sub-section.p[id=bill-number]"
-				}
+				"$selector": "@table-row.td[!nth=1].font"
 			}
 		}
 	},
@@ -42,18 +33,18 @@
 		"$type": "object",
 		"$key_node": {
 			"$type": "string",
-			"$selector": "body.div[id=main-block].main.section[id=contact-info].div[id=name]"
+			"$selector": "body.div[id=main-block].main.div[id=billStatus].span"
 		},
 		"$value_node": {
 			"$type": "string",
-			"$selector": "a:href"
+			"$selector": "body.div[id=main-block].main.div[id=billStatus].span"
 		}
 	},
 	"links": {
 		"$type": "object",
-		"$itr_node": "body.div.main.section",
-		"$itr_node_match": "div",
-		"$itr_ident": "contact-info",
+		"$itr_el": "body.div.main.section",
+		"$itr_el_match": "div",
+		"$itr_ident": "table-row",
 		"$key_node": {
 			"$type": "string",
 			"$selector": "@contact-info.div[id=name]"

@@ -25,3 +25,7 @@ go.work
 
 # temp dir
 tmp
+
+# test output
+out.json
+
