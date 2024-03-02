@@ -420,4 +420,25 @@ This will output the value of the selected node as a number
 - [ ] Add support for !nth to have a value of `first`/`last`
 - [ ] Add support for selecting out data via `:<attribute-name>`
 - [ ] Add support for `?` (optional) access
+- [ ] Add support for `!` (required) access
+- [ ] Add support for coalescing
+- [ ] Add support for default values
+- [ ] Add support for conditional node access (aka pattern matching style)
 - [ ] Add support for array with index access (useful for tables with headers)
+
+### CLI
+- [ ] Add support for reading from a file
+- [ ] Add support for writing to a file
+- [ ] Add support for reading from stdin
+- [ ] Add support for writing to stdout
+- [ ] Add help/usage information
+
+### Testing
+- [ ] Add tests for all supported types
+- [ ] Add tests for all supported selectors
+- [ ] Add tests for ast
+- [ ] Add tests for schema parsing
+
+### Examples
+- [ ] All the examples
+

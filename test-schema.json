@@ -54,5 +54,24 @@
 			"$type": "string",
 			"$selector": "@table-row.td[!nth=1].font"
 		}
+	},
+	"pattern_matching": {
+		"$type": "string",
+		"$matcher": {
+			"$one_of": [
+				{
+					"$selector": "body.div[id=main-block].main.div[id=billStatus].div.span"
+				},
+				{
+					"$selector": "body.div[id=main-block].main.div[id=billStatus].span"
+				},
+				{
+					"$selector": "body.div[id=main-block].main.div[id=billStatus].div.div.span"
+				}
+			],
+			"$default": {
+				"$value": "UNKNOWN"
+			}
+		}
 	}
 }
