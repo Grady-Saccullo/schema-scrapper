@@ -340,6 +340,7 @@ This will output the value of the selected node as a number
 | `$itr_el`       | ❌       | The node to iterate over to build the object. If not provided the object will only have one key value pair. |
 | `$itr_ident`    | ❌       | The internal identifier to reference in the schema. This is required when `$itr_el` is supplied |
 | `$itr_el_match` | ❌       | The tag to match against when iterating. This has the same power as the `$selector` field. This is required when `$itr_el` is supplied |
+| `$start_offset` | ❌       | The index to start the iteration at. This is 0 based. If not supplied assumes `0` |
 
 **Input HTML**
 ```html

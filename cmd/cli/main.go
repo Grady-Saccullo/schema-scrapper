@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Grady-Saccullo/schema-scrapper/pkg/ast"
 	"github.com/chromedp/cdproto/emulation"
@@ -42,7 +41,7 @@ func main() {
 		),
 		emulation.SetUserAgentOverride("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15"),
 		chromedp.Navigate(url),
-		chromedp.Sleep(10*time.Second),
+		// chromedp.Sleep(10*time.Second),
 		// chromedp.WaitVisible(`[data-e2e="explore-card-desc"]`, chromedp.ByQueryAll),
 		chromedp.OuterHTML("html", &htmlContent),
 	)
@@ -367,6 +366,60 @@ func parseJsonSchema(
 							value := getNode(node, lookUpNodes, (*el.ValueNode)["$selector"].(string))
 							out[k] = map[string]interface{}{key.(string): value}
 						}
+					} else {
+						itrElTree := getNode(node, lookUpNodes, *el.ItrEl)
+
+						if itrElTree == nil {
+							fmt.Println("Error: Could not find node for itr_el: ", *el.ItrEl)
+							return
+						}
+
+						if el.ItrIdent == nil {
+							panic("Error: $itr_ident is required for object")
+						}
+
+						if el.ValueNode == nil {
+							panic("Error: $value_node is required for object")
+						}
+
+						out[k] = make(map[string]interface{})
+
+						idx := 0
+
+						for _, childEl := range itrElTree.(*ast.Element).Children() {
+							if el.StartOffset != nil && idx < *el.StartOffset {
+								idx++
+								continue
+							}
+
+							if lookUpNodes != nil {
+								(*lookUpNodes)[*el.ItrIdent] = childEl
+							} else {
+								m := make(map[string]ast.Node)
+								m[*el.ItrIdent] = childEl
+								lookUpNodes = &m
+							}
+
+							switch (*el.ValueNode)["$type"] {
+							case nil:
+								outItem := map[string]interface{}{}
+								parseJsonSchema(childEl, lookUpNodes, *el.ValueNode, outItem)
+
+								key := getNode(childEl, lookUpNodes, (*el.KeyNode)["$selector"].(string))
+								if key == nil {
+									panic("Error: Could not find node for key: " + (*el.KeyNode)["$selector"].(string))
+								}
+
+								out[k].(map[string]interface{})[key.(string)] = outItem
+							default:
+								value := getNode(childEl, lookUpNodes, (*el.ValueNode)["$selector"].(string))
+								key := getNode(childEl, lookUpNodes, (*el.KeyNode)["$selector"].(string))
+								if key == nil {
+									panic("Error: Could not find node for key: " + (*el.KeyNode)["$selector"].(string))
+								}
+								out[k].(map[string]interface{})[key.(string)] = value
+							}
+						}
 					}
 				case nil:
 					out[k] = map[string]interface{}{}
@@ -375,7 +428,14 @@ func parseJsonSchema(
 					fmt.Println("Unknown type: ", v.(map[string]interface{})["$type"])
 				}
 			case string:
-				fmt.Println("STRING: ", k, v)
+				switch k {
+				case "$version":
+					fmt.Println("Version: ", v)
+				case "$paths":
+					fmt.Println("$paths not implemented yet... not too hook into look up nodes")
+				default:
+					panic(fmt.Sprintf("Error: %s:%s is not a valid schema", k, v))
+				}
 			}
 		case []interface{}:
 			switch v.(type) {
@@ -453,10 +513,11 @@ type JsonSchemaNodeArray struct {
 }
 
 type JsonSchemaNodeObject struct {
-	Type       SchemaNodeType          `json:"$type" mapstructure:"$type"`
-	ItrIdent   *string                 `json:"$itr_ident" mapstructure:"$itr_ident"`
-	ItrEl      *string                 `json:"$itr_el" mapstructure:"$itr_el"`
-	ItrElMatch *string                 `json:"$itr_el_match" mapstructure:"$itr_el_match"`
-	KeyNode    *map[string]interface{} `json:"$key_node" mapstructure:"$key_node"`
-	ValueNode  *map[string]interface{} `json:"$value_node" mapstructure:"$value_node"`
+	Type        SchemaNodeType          `json:"$type" mapstructure:"$type"`
+	ItrIdent    *string                 `json:"$itr_ident" mapstructure:"$itr_ident"`
+	ItrEl       *string                 `json:"$itr_el" mapstructure:"$itr_el"`
+	ItrElMatch  *string                 `json:"$itr_el_match" mapstructure:"$itr_el_match"`
+	KeyNode     *map[string]interface{} `json:"$key_node" mapstructure:"$key_node"`
+	ValueNode   *map[string]interface{} `json:"$value_node" mapstructure:"$value_node"`
+	StartOffset *int                    `json:"$start_offset" mapstructure:"$start_offset"`
 }

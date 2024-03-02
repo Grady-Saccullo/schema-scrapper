@@ -42,16 +42,17 @@
 	},
 	"links": {
 		"$type": "object",
-		"$itr_el": "body.div.main.section",
-		"$itr_el_match": "div",
+		"$itr_el": "body.div[id=main-block].main.div[id=billStatus].div.table.tbody",
+		"$itr_el_match": "tr",
 		"$itr_ident": "table-row",
+		"$start_offset": 1,
 		"$key_node": {
 			"$type": "string",
-			"$selector": "@contact-info.div[id=name]"
+			"$selector": "@table-row.td[!nth=0].font"
 		},
 		"$value_node": {
 			"$type": "string",
-			"$selector": "@contact-info.a:href"
+			"$selector": "@table-row.td[!nth=1].font"
 		}
 	}
 }
